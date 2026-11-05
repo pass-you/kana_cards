@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌸 五十音卡片学院 🐱</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: "Comic Sans MS","PingFang SC","Microsoft YaHei",sans-serif;
+    background: linear-gradient(160deg,#ffe6f7 0%,#fff7d6 45%,#d9f7ff 100%);
+    color:#3a3a3a; min-height:100vh; overflow-x:hidden;
+  }
+  .deco { position:fixed; z-index:0; font-size:42px; opacity:.5; pointer-events:none;
+    animation: floaty 6s ease-in-out infinite; user-select:none; }
+  @keyframes floaty { 0%,100%{ transform:translateY(0) rotate(-6deg);} 50%{ transform:translateY(-18px) rotate(6deg);} }
+
+  .wrap { position:relative; z-index:1; max-width:960px; margin:0 auto; padding:20px 14px 60px; }
+
+  header { text-align:center; padding:10px 0 4px; }
+  header h1 { font-size:2.2em; }
+  .doodle { display:inline-block; animation:bob 2.4s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-8px);} }
+  .subtitle { color:#8a5660; margin-top:6px; font-size:.95em; }
+
+  .mascot-bar {
+    display:flex; align-items:center; gap:10px; justify-content:center;
+    margin:14px auto 4px; background:#fff; border:3px solid #3a3a3a; border-radius:18px;
+    box-shadow:5px 5px 0 rgba(58,58,58,.85); padding:8px 18px; max-width:680px; flex-wrap:wrap;
+  }
+  .mascot-bar .cat { font-size:1.8em; animation:bob 3s ease-in-out infinite; }
+  .cat-say { font-size:.95em; color:#5a4a55; }
+  .stats { margin-left:auto; font-size:.85em; color:#937; display:flex; gap:12px; flex-wrap:wrap; }
+
+  .tabs { display:flex; gap:12px; justify-content:center; margin:22px 0; flex-wrap:wrap; }
+  .tab {
+    padding:10px 22px; font-size:1.05em; cursor:pointer; background:#fff;
+    border:3px solid #3a3a3a; border-radius:999px; box-shadow:4px 4px 0 rgba(58,58,58,.85);
+    transition:transform .15s, box-shadow .15s, background .15s; user-select:none;
+  }
+  .tab:hover { transform:translate(-1px,-3px); box-shadow:6px 7px 0 rgba(58,58,58,.85); }
+  .tab.active { background:#ffd93d; transform:translate(2px,2px); box-shadow:1px 1px 0 rgba(58,58,58,.85); }
+
+  .panel { display:none; }
+  .panel.show { display:block; animation:pop .3s ease; }
+  @keyframes pop { from{ transform:scale(.96); opacity:0; } to{ transform:scale(1); opacity:1; } }
+
+  .modes { display:flex; gap:8px; justify-content:center; margin-bottom:16px; flex-wrap:wrap; }
+  .mode-btn {
+    padding:6px 16px; border:3px solid #3a3a3a; border-radius:999px; background:#fff;
+    cursor:pointer; font-size:.92em; box-shadow:3px 3px 0 rgba(58,58,58,.85); font-family:inherit;
+  }
+  .mode-btn.active { background:#a78bfa; color:#fff; }
+
+  /* 图鉴 */
+  .row-label {
+    display:inline-block; font-size:.8em; background:#74ebd5; border:2px solid #3a3a3a;
+    border-radius:8px; padding:2px 10px; margin:0 0 6px 4px; box-shadow:2px 2px 0 rgba(58,58,58,.8);
+  }
+  .grid { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+  .mini-card {
+    width:64px; height:80px; background:#fff; border:3px solid #3a3a3a; border-radius:14px;
+    box-shadow:4px 4px 0 rgba(58,58,58,.85); cursor:pointer; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; transition:transform .15s, background .15s; user-select:none;
+  }
+  .mini-card:hover { transform:translate(-1px,-4px) rotate(-2deg); background:#fff3fa; }
+  .mini-card .k { font-size:1.7em; line-height:1.15; }
+  .mini-card .r { font-size:.72em; color:#a05577; margin-top:2px; }
+
+  /* 翻卡 */
+  .deck-area { display:flex; flex-direction:column; align-items:center; gap:16px; }
+  .deck-progress { font-size:.9em; color:#7a5560; }
+  .card3d { width:280px; height:340px; perspective:900px; cursor:pointer; }
+  .flipper { position:relative; width:100%; height:100%; transform-style:preserve-3d;
+    transition:transform .55s cubic-bezier(.4,1.4,.6,1); }
+  .card3d.flipped .flipper { transform:rotateY(180deg); }
+  .face {
+    position:absolute; inset:0; backface-visibility:hidden; background:#fff;
+    border:4px solid #3a3a3a; border-radius:24px; box-shadow:7px 7px 0 rgba(58,58,58,.85);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding:18px; text-align:center;
+  }
+  .face.front { background:linear-gradient(160deg,#fff,#ffeaf6); }
+  .face.front .big { font-size:5.4em; line-height:1.05; }
+  .face.front .hint { margin-top:12px; font-size:.82em; color:#b05880; }
+  .face.back { transform:rotateY(180deg); background:linear-gradient(160deg,#fff,#e8faff); }
+  .face.back .big { font-size:3.2em; color:#5b4bc4; }
+  .face.back .mn { margin-top:10px; font-size:1em; color:#4a5568; line-height:1.55; }
+  .deck-btns { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  .btn {
+    padding:10px 20px; font-size:1em; font-family:inherit; cursor:pointer; background:#fff;
+    border:3px solid #3a3a3a; border-radius:999px; box-shadow:4px 4px 0 rgba(58,58,58,.85);
+    transition:transform .12s, box-shadow .12s;
+  }
+  .btn:hover { transform:translate(-1px,-2px); box-shadow:6px 6px 0 rgba(58,58,58,.85); }
+  .btn:active { transform:translate(2px,2px); box-shadow:1px 1px 0 rgba(58,58,58,.85); }
+  .btn.pink { background:#ff9ecb; } .btn.blue { background:#8fd9ff; }
+  .btn.green { background:#b6f2a8; } .btn.yellow { background:#ffd93d; }
+
+  /* 测验 */
+  .quiz-area { max-width:520px; margin:0 auto; text-align:center; }
+  .quiz-card {
+    background:#fff; border:4px solid #3a3a3a; border-radius:24px;
+    box-shadow:7px 7px 0 rgba(58,58,58,.85); padding:26px 20px; margin-bottom:16px;
+  }
+  .quiz-card .q-kan { font-size:5.2em; line-height:1.15; }
+  .quiz-meta { font-size:.85em; color:#996688; margin-bottom:8px; }
+  .options { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .opt {
+    padding:12px; font-size:1.25em; background:#fff; border:3px solid #3a3a3a; border-radius:14px;
+    box-shadow:4px 4px 0 rgba(58,58,58,.85); cursor:pointer; transition:transform .12s, background .12s;
+    font-family:inherit;
+  }
+  .opt:hover { transform:translate(-1px,-2px); background:#fff3fa; }
+  .opt.correct { background:#b6f2a8; animation:wiggle .4s; }
+  .opt.wrong { background:#ffb3b3; }
+  @keyframes wiggle { 0%,100%{transform:rotate(0);} 25%{transform:rotate(-4deg);} 75%{transform:rotate(4deg);} }
+  .feedback { min-height:60px; font-size:1.02em; margin:14px 0 2px; font-weight:bold; line-height:1.5; }
+  .result-line { margin:6px 0; font-size:1.05em; }
+  .tip-line { text-align:center; font-size:.8em; color:#aa8899; margin-top:8px; }
+
+  .modal-mask { position:fixed; inset:0; background:rgba(70,40,70,.45); z-index:50;
+    display:none; align-items:center; justify-content:center; }
+  .modal-mask.show { display:flex; }
+  .modal-card {
+    background:#fff; border:4px solid #3a3a3a; border-radius:24px;
+    box-shadow:8px 8px 0 rgba(58,58,58,.85); padding:30px 34px; text-align:center;
+    animation:pop .25s ease; max-width:360px; width:88%;
+  }
+  .modal-card .big { font-size:4.6em; }
+  .modal-card .r { color:#5b4bc4; font-size:1.6em; margin:6px 0; }
+  .modal-card .mn { color:#556; line-height:1.6; margin:8px 0 16px; }
+
+  footer { text-align:center; margin-top:36px; font-size:.82em; color:#aa7788; line-height:1.8; }
+
+  @media (max-width:520px){
+    .mini-card { width:52px; height:68px; }
+    .card3d { width:250px; height:312px; }
+  }
+</style>
+</head>
+<body>
+  <span class="deco" style="top:8%;  left:4%;">🌸</span>
+  <span class="deco" style="top:15%; left:88%; animation-delay:1s;">☁️</span>
+  <span class="deco" style="top:60%; left:2%;  animation-delay:2s;">🍡</span>
+  <span class="deco" style="top:75%; left:92%; animation-delay:.5s;">🌸</span>
+  <span class="deco" style="top:40%; left:96%; animation-delay:2.5s;">⭐</span>
+
+  <div class="wrap">
+    <header>
+      <h1><span class="doodle">🌸</span> 五十音卡片学院 <span class="doodle" style="animation-delay:.6s;">🐱</span></h1>
+      <p class="subtitle">每天摸一摸卡片，五十音就住进你的脑袋里啦！</p>
+    </header>
+
+    <div class="mascot-bar">
+      <span class="cat">🐱</span>
+      <span class="cat-say" id="catSay">…</span>
+      <div class="stats">
+        <span id="statBest">🏅 最高连对:0</span>
+        <span id="statAcc">💾 答对:0 错:0</span>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" data-tab="book">📚 卡片图鉴</div>
+      <div class="tab" data-tab="deck">🃏 翻卡练习</div>
+      <div class="tab" data-tab="quiz">🎯 打怪测验</div>
+    </div>
+
+    <!-- 图鉴 -->
+    <section class="panel show" id="panel-book">
+      <div class="modes" id="bookModes">
+        <button class="mode-btn active" data-mode="all">🌈 全部</button>
+        <button class="mode-btn" data-mode="seion">🎵 清音（46个，先学这个！）</button>
+        <button class="mode-btn" data-mode="dakuon">🌀 浊音 / 半浊音</button>
+      </div>
+      <div id="bookGrid"></div>
+      <p class="tip-line">💡 点击任意卡片可以看大卡片 + 记忆口诀，还会自动读一遍（配合老师的课程记口诀效果翻倍！）</p>
+    </section>
+
+    <!-- 翻卡 -->
+    <section class="panel" id="panel-deck">
+      <div class="modes" id="deckModes">
+        <button class="mode-btn active" data-mode="seion">🎵 只练清音</button>
+        <button class="mode-btn" data-mode="dakuon">🌀 只练浊音</button>
+        <button class="mode-btn" data-mode="all">💪 全部都要</button>
+      </div>
+      <div class="deck-area">
+        <div class="deck-progress" id="deckProgress"></div>
+        <div class="card3d" id="card3d" title="点我翻面！空格键也可以">
+          <div class="flipper">
+            <div class="face front">
+              <div class="big" id="deckKana">あ</div>
+              <div class="hint">👆 点我看看背面</div>
+            </div>
+            <div class="face back">
+              <div class="big" id="deckRomaji">a</div>
+              <div class="mn" id="deckMn"></div>
+            </div>
+          </div>
+        </div>
+        <div class="deck-btns">
+          <button class="btn" id="deckPrev">⬅️ 上一张</button>
+          <button class="btn pink" id="deckFlip">🔄 翻面</button>
+          <button class="btn blue" id="deckSpeak">🔊 读给我听</button>
+          <button class="btn green" id="deckShuffle">🔀 洗牌</button>
+          <button class="btn" id="deckNext">下一张 ➡️</button>
+        </div>
+        <p class="tip-line">⌨️ 键盘党福利：空格 = 翻面，A / D = 切换卡片。翻面前先在心里念一遍再验证！</p>
+      </div>
+    </section>
+
+    <!-- 测验 -->
+    <section class="panel" id="panel-quiz">
+      <div class="modes" id="quizModes">
+        <button class="mode-btn active" data-mode="seion">🎵 清音测验</button>
+        <button class="mode-btn" data-mode="dakuon">🌀 浊音测验</button>
+        <button class="mode-btn" data-mode="all">🏆 终极挑战</button>
+      </div>
+      <div class="quiz-area">
+        <div class="quiz-card">
+          <div class="quiz-meta" id="quizMeta"></div>
+          <div class="q-kan" id="quizKana"></div>
+          <div class="options" id="quizOptions"></div>
+          <div class="feedback" id="quizFeedback"></div>
+        </div>
+        <button class="btn yellow" id="quizRestart">🔁 重新开考</button>
+        <p class="tip-line">⌨️ 可以按数字键 1~4 快速作答</p>
+      </div>
+    </section>
+
+    <footer>
+      🌸 五十音卡片学院 · 单文件离线使用，双击即开，无需联网 🌸<br>
+      🔊 读音用的是浏览器自带日语语音；若没声音，说明系统缺少日语语音包，不影响其他功能
+    </footer>
+  </div>
+
+  <div class="modal-mask" id="modalMask">
+    <div class="modal-card">
+      <div class="big" id="modalKana">あ</div>
+      <div class="r" id="modalRomaji">a</div>
+      <div class="mn" id="modalMn"></div>
+      <div>
+        <button class="btn blue" id="modalSpeak">🔊 再读一遍</button>
+        <button class="btn" id="modalClose">✖️ 关闭</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+"use strict";
+/* ================= 数据 ================= */
+const SEION = [
+["あ","a","像“安”的草书 → 啊"],["い","i","两笔竖线像“以” → 衣"],["う","u","像屋顶，嘴别嘟圆 → 乌"],["え","e","像“工”加两笔 → 欸"],["お","o","像“术”多一圈 → 哦"],
+["か","ka","像“卡”的上半 → 卡"],["き","ki","像一把钥匙(key) → 基"],["く","ku","像张开的鸟嘴 → 库"],["け","ke","像“汁”的草书 → 开"],["こ","ko","两个小钩子 → 阔"],
+["さ","sa","像草书“散” → 撒"],["し","shi","像竖着的小鱼钩 → 西"],["す","su","像“寿”的上半 → 斯"],["せ","se","像“世”的草书 → 塞"],["そ","so","一笔竖弯钩 → 嗦"],
+["た","ta","像“太”的草书 → 他"],["ち","chi","像“千”少一横 → 七"],["つ","tsu","像一股小波浪 → 呲"],["て","te","像手指伸开 → 贴"],["と","to","像鸟嘴咬住钉子 → 托"],
+["な","na","像“拿”的草书 → 拿"],["に","ni","像“二”加两笔 → 尼"],["ぬ","nu","像“奴”的草书 → 奴"],["ね","ne","尾巴卷起像猫尾 → 捏"],["の","no","像蜗牛壳 → 挪"],
+["は","ha","像“哈”的草书 → 哈"],["ひ","hi","像一张小笑脸 → 嘿"],["ふ","fu","像“富”的草书 → 夫"],["へ","he","像一座小山坡 → 喝"],["ほ","ho","是“は”多一横 → 豁"],
+["ま","ma","像“马”的草书 → 妈"],["み","mi","像“三”的草书 → 咪"],["む","mu","像滚滚的毛线团 → 姆"],["め","me","是“ぬ”的姐妹 → 梅"],["も","mo","像一条小毛虫 → 摸"],
+["や","ya","像“也”的草书 → 呀"],["ゆ","yu","像一条小鱼摆尾 → 优"],["よ","yo","像小钥匙加横 → 哟"],
+["ら","ra","像“5”加尾巴 → 拉"],["り","ri","像两笔竖杠 → 哩"],["る","ru","尾巴打了个卷 → 噜"],["れ","re","像“礼”的草书 → 勒"],["ろ","ro","是“る”没打卷 → 喽"],
+["わ","wa","向右边打个卷 → 娃"],["を","wo","像“在”的草书 → 哦"],["ん","n","像两根小天线 → 嗯"]
+];
+const DAKUON = [
+["が","ga","か加两个点 → 嘎"],["ぎ","gi","き加两点 → 给"],["ぐ","gu","く加两点 → 固"],["げ","ge","け加两点 → 盖"],["ご","go","こ加两点 → 够"],
+["ざ","za","さ加两点 → 砸"],["じ","ji","し加两点 → 鸡"],["ず","zu","す加两点 → 滋"],["ぜ","ze","せ加两点 → 贼"],["ぞ","zo","そ加两点 → 早"],
+["だ","da","た加两点 → 达"],["ぢ","ji","ち加两点 → 鸡"],["づ","zu","つ加两点 → 滋"],["で","de","て加两点 → 得"],["ど","do","と加两点 → 躲"],
+["ば","ba","は加两点 → 爸"],["び","bi","ひ加两点 → 比"],["ぶ","bu","ふ加两点 → 布"],["べ","be","へ加两点 → 贝"],["ぼ","bo","ほ加两点 → 簸"],
+["ぱ","pa","は加小圈 → 趴"],["ぴ","pi","ひ加小圈 → 批"],["ぷ","pu","ふ加小圈 → 扑"],["ぺ","pe","へ加小圈 → 呸"],["ぽ","po","ほ加小圈 → 坡"]
+];
+const ROW_NAME = {
+  a:"あ 行",ka:"か 行",sa:"さ 行",ta:"た 行",na:"な 行",ha:"は 行",ma:"ま 行",
+  ya:"や 行(少2个)",ra:"ら 行",wa:"わ 行(少3个)",n:"ん 拨音",
+  ga:"が 行",za:"ざ 行",da:"だ 行",ba:"ば 行",pa:"ぱ 行"
+};
+function toItems(arr, type){
+  const r0 = { a:"a",ka:"ka",sa:"sa",ta:"ta",na:"na",ha:"ha",ma:"ma",ya:"ya",ra:"ra",wa:"wa" };
+  const keys = type==="seion" ? r0 : {ga:"ga",za:"za",da:"da",ba:"ba",pa:"pa"};
+  return arr.map(([k,r,m])=>{
+    let row = keys[r[0]] || null;
+    if (type==="seion" && !row) row = "n"; // ん
+    return { k, r, m, type, row };
+  });
+}
+const ALL = toItems(SEION,"seion").concat(toItems(DAKUON,"dakuon"));
+const poolBy = mode => mode==="all" ? ALL : ALL.filter(d=>d.type===mode);
+
+/* ================= 工具 ================= */
+const $ = id => document.getElementById(id);
+const shuffle = a => { a=[...a]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+const CAT_GOOD = ["太棒啦！给你比心 💖","答对了！你是假名天才喵！⭐","喵呜~ 棒极了，寿司都给你 🍣","全对喵！奖励你一朵小红花 🌸"];
+const CAT_BAD  = ["喵呜~ 错啦，但没关系！再来！💪","差一点点喵~ 去图鉴看看口诀嘛 👀","哼哼，猫咪原谅你，下次记住就好 😺"];
+const catSay = t => { $("catSay").textContent = "喵~ " + t; };
+
+function speak(text){
+  if (!("speechSynthesis" in window)) return;
+  try{
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "ja-JP"; u.rate = .75;
+    speechSynthesis.cancel(); speechSynthesis.speak(u);
+  }catch(e){}
+}
+
+function loadStats(){ try{ const s=JSON.parse(localStorage.getItem("jpKanaStats")); if(s) Object.assign(stats,s); }catch(e){} }
+function saveStats(){ try{ localStorage.setItem("jpKanaStats", JSON.stringify(stats)); }catch(e){} }
+function renderStats(){
+  $("statBest").textContent = "🏅 最高连对:" + stats.best;
+  $("statAcc").textContent = "💾 答对:" + stats.right + " 错:" + stats.wrong;
+}
+let stats = { best:0, right:0, wrong:0 };
+loadStats(); renderStats();
+
+/* ================= 页签 ================= */
+document.querySelectorAll(".tab").forEach(t=>{
+  t.addEventListener("click", ()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("show"));
+    $("panel-"+t.dataset.tab).classList.add("show");
+    if (t.dataset.tab==="quiz" && !quizActive) startQuiz();
+  });
+});
+
+function bindModes(id, cb){
+  document.querySelectorAll("#"+id+" .mode-btn").forEach(b=>{
+    b.addEventListener("click", ()=>{
+      document.querySelectorAll("#"+id+" .mode-btn").forEach(x=>x.classList.remove("active"));
+      b.classList.add("active");
+      cb(b.dataset.mode);
+    });
+  });
+}
+
+/* ================= 图鉴 ================= */
+function renderBook(mode){
+  const grid = $("bookGrid");
+  grid.innerHTML = "";
+  const items = poolBy(mode);
+  const seen = {};
+  items.forEach(item=>{
+    if (!seen[item.row]){
+      seen[item.row] = true;
+      const label = document.createElement("span");
+      label.className = "row-label";
+      label.textContent = (ROW_NAME[item.row] || item.row);
+      grid.appendChild(label);
+      const row = document.createElement("div");
+      row.className = "grid";
+      // 收集同行的假名
+      items.filter(d=>d.row===item.row).forEach(d=>{
+        const c = document.createElement("div");
+        c.className = "mini-card";
+        c.innerHTML = '<div class="k">'+d.k+'</div><div class="r">'+d.r+'</div>';
+        c.addEventListener("click", ()=>{
+          $("modalKana").textContent = d.k;
+          $("modalRomaji").textContent = d.r;
+          $("modalMn").innerHTML = "💡 " + d.m + "<br><small style='color:#b99'>(IEL…口诀是老师课堂教的哦)</small>";
+          $("modalMask").classList.add("show");
+          speak(d.k);
+        });
+        row.appendChild(c);
+      });
+      grid.appendChild(row);
+    }
+  });
+}
+bindModes("bookModes", renderBook);
+
+/* ================= 翻卡练习 ================= */
+let deckItems = [], deckOrder = [], deckIdx = 0;
+function setDeckMode(mode){
+  deckItems = poolBy(mode);
+  deckOrder = shuffle(deckItems.map((_,i)=>i));
+  deckIdx = 0;
+  showDeck();
+}
+function showDeck(){
+  const item = deckItems[deckOrder[deckIdx]];
+  $("card3d").classList.remove("flipped");
+  $("deckKana").textContent = item.k;
+  $("deckRomaji").textContent = item.r;
+  $("deckMn").textContent = "💡 " + item.m;
+  $("deckProgress").textContent = "第 " + (deckIdx+1) + " / " + deckOrder.length + " 张";
+}
+function deckMove(d){ deckIdx = (deckIdx + d + deckOrder.length) % deckOrder.length; showDeck(); }
+function deckFlip(){ $("card3d").classList.toggle("flipped"); }
+$("deckNext").onclick = ()=> deckMove(1);
+$("deckPrev").onclick = ()=> deckMove(-1);
+$("deckFlip").onclick = deckFlip;
+$("card3d").onclick = deckFlip;
+$("deckShuffle").onclick = ()=>{ deckOrder = shuffle(deckOrder); deckIdx = 0; showDeck(); catSay("洗好牌啦！抽出第一张！"); };
+$("deckSpeak").onclick = ()=> speak(deckItems[deckOrder[deckIdx]].k);
+bindModes("deckModes", setDeckMode);
+
+/* ================= 打怪测验 ================= */
+let quizActive = false, quizLocked = false;
+let quiz = null;
+function startQuiz(){
+  const mode = document.querySelector("#quizModes .mode-btn.active").dataset.mode;
+  const qs = shuffle(poolBy(mode)).slice(0, Math.min(10, poolBy(mode).length));
+  quiz = { qs, idx:0, right:0, streak:0, miss:[] };
+  quizActive = true;
+  nextQuestion();
+}
+function nextQuestion(){
+  if (quiz.idx >= quiz.qs.length){ showResult(); return; }
+  quizLocked = false;
+  const item = quiz.qs[quiz.idx];
+  quiz.cur = item;
+  $("quizKana").textContent = item.k;
+  $("quizMeta").textContent = "第 " + (quiz.idx+1) + " / " + quiz.qs.length + " 题 · 连对 " + quiz.streak + " 🔥";
+  const opts = [item.r];
+  const pool = poolBy(document.querySelector("#quizModes .mode-btn.active").dataset.mode);
+  while (opts.length < 4){
+    const cand = pick(pool).r;
+    if (!opts.includes(cand)) opts.push(cand);
+  }
+  const ordered = shuffle(opts);
+  $("quizFeedback").innerHTML = "";
+  const box = $("quizOptions"); box.innerHTML = "";
+  ordered.forEach((r,i)=>{
+    const b = document.createElement("button");
+    b.className = "opt";
+    b.textContent = r;
+    b.addEventListener("click", ()=>{ if (!quizLocked) answer(b); });
+    box.appendChild(b);
+  });
+}
+function answer(btn){
+  quizLocked = true;
+  const item = quiz.cur;
+  const ok = btn.textContent === item.r;
+  if (ok){
+    btn.classList.add("correct");
+    quiz.right++; quiz.streak++; stats.right++;
+    if (quiz.streak > stats.best) stats.best = quiz.streak;
+    $("quizFeedback").innerHTML = "✅ " + pick(CAT_GOOD) + "<br>" + item.k + " = " + item.r;
+    speak(item.k);
+  } else {
+    btn.classList.add("wrong");
+    document.querySelectorAll("#quizOptions .opt").forEach(b=>{
+      if (b.textContent === item.r) b.classList.add("correct");
+    });
+    quiz.streak = 0; stats.wrong++; quiz.miss.push(item);
+    $("quizFeedback").innerHTML = "❌ " + pick(CAT_BAD) + "<br>正确答案:" + item.k + " = " + item.r + "（" + item.m + "）";
+  }
+  renderStats(); saveStats();
+  setTimeout(()=>{
+    quiz.idx++;
+    if (quiz.idx >= quiz.qs.length) showResult();
+    else nextQuestion();
+  }, ok ? 800 : 2200);
+}
+function showResult(){
+  quizActive = false;
+  const rate = Math.round(quiz.right / quiz.qs.length * 100);
+  let emoji, msg;
+  if (rate === 100){ emoji = "🏆"; msg = "全对！N2 在向你招手喵！"; }
+  else if (rate >= 70){ emoji = "🎉"; msg = "很棒！错的那几张多翻几次图鉴就记住了~"; }
+  else { emoji = "🥺"; msg = "没关系！去图鉴把错题的口诀读三遍再来喵！"; }
+  $("quizKana").textContent = emoji;
+  $("quizMeta").textContent = "考试结束!";
+  $("quizOptions").innerHTML = "";
+  $("quizFeedback").innerHTML =
+    '<div class="result-line">答对 <b>' + quiz.right + '</b> / ' + quiz.qs.length + '（正确率 ' + rate + '%）</div>' +
+    '<div class="result-line">🔥 本轮连对最高 ' + quiz.streak + '</div>' +
+    '<div class="result-line">' + msg + '</div>' +
+    (quiz.miss.length ? '<div class="result-line" style="font-size:.85em;color:#b06677">易错假名:' + quiz.miss.map(m=>m.k).join(" ") + '</div>' : "");
+}
+bindModes("quizModes", startQuiz);
+$("quizRestart").onclick = startQuiz;
+
+/* ================= 弹窗 & 键盘 ================= */
+$("modalClose").onclick = ()=> $("modalMask").classList.remove("show");
+$("modalMask").addEventListener("click", e=>{ if (e.target === $("modalMask")) $("modalMask").classList.remove("show"); });
+$("modalSpeak").onclick = ()=> speak($("modalKana").textContent);
+
+document.addEventListener("keydown", e=>{
+  if ($("panel-deck").classList.contains("show")){
+    if (e.code === "Space"){ e.preventDefault(); deckFlip(); }
+    if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") deckMove(1);
+    if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft") deckMove(-1);
+  }
+  if ($("panel-quiz").classList.contains("show") && quizActive && !quizLocked){
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 4){
+      const btn = document.querySelectorAll("#quizOptions .opt")[n-1];
+      if (btn) btn.click();
+    }
+  }
+  if (e.key === "Escape") $("modalMask").classList.remove("show");
+});
+
+/* ================= 启动 ================= */
+const TIPS = [
+  "五十音是日语的地基，今天多记一个，N2 那天就轻松一分！",
+  "忘了假名不要紧，重要的是打开这张网页喵~",
+  "把 あ行 和 か行 手写 10 遍，比看 100 遍都管用！",
+  "あか=红色、かお=脸，你已经会读单词啦！🎉",
+  "十分钟图鉴 + 十分钟测验 > 一小时发呆喵~"
+];
+catSay(pick(TIPS));
+renderBook("all");
+setDeckMode("seion");
+$("quizMeta").textContent = "点一下开始;或者切个模式自动开考!";
+</script>
+</body>
+</html>
